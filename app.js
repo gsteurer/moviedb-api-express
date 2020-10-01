@@ -35,6 +35,20 @@ app.get("/movies", (req,res)=> {
       })
       console.log(error);
     })
+})
+
+app.get("/movies/search", (req,res)=> {
+    res.setHeader('Content-Type', 'application/json');
+
+    db.any('select * from movies where title LIKE $1 OR origin LIKE $1 OR genre LIKE $1 OR movie_cast LIKE $1 OR director LIKE $1 OR CAST(release_year as varchar) LIKE $1', ['%'+req.query.query+'%']).then(data => {
+        res.json(data);
+    }).catch(error => {
+      res.json({
+        error: error,
+        message: 'Unexpected error'
+      })
+      console.log(error);
+    })
 
 })
 
@@ -88,11 +102,14 @@ app.post('/movies', function (req, res) {
     let wiki_url = req.body.wiki_url
     let plot = req.body.plot
 
-    db.none(
-        'INSERT INTO movies(release_year, title, origin, director, movie_cast, genre, wiki_url, plot) VALUES($1, $2, $3, $4, $5, $6, $7, $8)',
+    db.one(
+        'INSERT INTO movies(release_year, title, origin, director, movie_cast, genre, wiki_url, plot) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
         [release_year, title, origin, director, movie_cast, genre, wiki_url, plot])
     .then((data) => {
-        res.send('hanled POST request')
+        res.json({
+            uid: data.uid,
+            message: "Successfully inserted item"
+        })
     })
     .catch(error => {
         res.json({
@@ -113,11 +130,14 @@ app.post('/movies/:id', function (req, res) {
     let wiki_url = req.body.wiki_url
     let plot = req.body.plot
 
-    db.none(
-        'INSERT INTO movies(uid, release_year, title, origin, director, movie_cast, genre, wiki_url, plot) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+    db.one(
+        'INSERT INTO movies(uid, release_year, title, origin, director, movie_cast, genre, wiki_url, plot) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
         [req.params.id, release_year, title, origin, director, movie_cast, genre, wiki_url, plot])
     .then((data) => {
-        res.send('hanled POST request')
+        res.json({
+            uid: data.uid,
+            message: "Successfully inserted item"
+        })
     })
     .catch(error => {
         res.json({
